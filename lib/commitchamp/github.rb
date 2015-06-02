@@ -5,8 +5,8 @@ module Commitchamp
     include HTTParty
     base_uri "https://api.github.com"
 
-    def get_contributors(owner_name, repo_title)
-      self.class.get("/repos/#{owner_name}/#{repo_title}/states/contributors")
+    def get_contributors(org_name, repo_title)
+      self.class.get("/repos/#{org_name}/#{repo_title}/stats/contributors")
     end
 
   end

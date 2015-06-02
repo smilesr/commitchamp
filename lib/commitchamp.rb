@@ -11,25 +11,29 @@ require 'commitchamp/models'
 module Commitchamp
   class App
     def initialize
+      if ENV['OAUTH_TOKEN']
+        token = ENV['OAUTH_TOKEN']
+      else
+        token = get_auth_token
+      end
       @github = Github.new
     end
 
 # ask user for token
-  def user_pass
-    if ENV['OAUTH_TOKEN'].nil?
-      puts "What is your github token code?"
-    end
-  end
+  # def user_pass
+  #   if ENV['OAUTH_TOKEN'].nil?
+  #     puts "What is your github token code?"
+  #   end
+  # end
 # show current repo db
   def show_table
-    puts "TEST"
+    puts "TEST: SHOW TABLE"
   end
 
-# ask user for choice of current repo & new repo
   def introduction
-    puts "What is your github username"
-    @owner_name = gets.chomp
-
+    # puts "What is your github username"
+    # @owner_name = gets.chomp
+# add validation
     puts "Would you like contribution statistics for
       (1) a repository currently in the database, or
       (2) a new repository"
@@ -46,7 +50,7 @@ module Commitchamp
 # enter name of repo if from db
   def name_of_repo
     puts "What is the name of the repo from the database that you would like statistics for:"
-      repo_name = gets.chomp
+      @repo_name = gets.chomp
     # until repo_name =~ /^\w*$/
     #   puts "Please try again."
     #   repo_name = gets.chomp
@@ -56,7 +60,7 @@ module Commitchamp
 # enter name of org and repo if needs to be fetched
   def name_of_org
     puts "What is the name of the organization that the repo is in?"
-    response_org = gets.chomp
+    @org_name = gets.chomp
      # until response_org =~ /^\w*$/
      #  puts "Please try again."
      #  response_org = gets.chomp
@@ -64,15 +68,16 @@ module Commitchamp
   end
 # query the table
   def query_table
+    puts @user_person.includes(:contribution).order("contribution.additions :desc")
   end
 
 # get contributors from selected repo
-  def pull_contributors(owner_name, repo_name)
-    contributors = @github.get_contributors(owner_name, repo_name)
+  def pull_contributors#(@owner_name, @repo_name)
+
+    contributors = @github.get_contributors(@org_name, @repo_name)
+#
     contributors.each do |x|
-      # x.each do |y|
-        table_contributor(x["author"]["login"])
-      # end
+        table_contributor(x)
     end
   end
 # temp1.each do |xx|
@@ -81,24 +86,23 @@ module Commitchamp
 # end
 # put contributors in db
   def table_contributor(contributor)
-     # User.find_or_create_by(user_name: contributor('login'))
-     User.find_or_create_by(user_name: contributor)
-     #binding.pry
-      # Reposit.find_or_create_by(reposit_name: @repo_name)
-      # user.reposits.create(reposit_name: @repo_name)
-      # user.reposits.contributions()
-      # Contribution.find_or_create_by()
+    binding.pry
+     @user_person = User.find_or_create_by(user_name: contributor["author"]["login"])
+     lines_added = contributor['weeks'].map { |x| x['a'] }.sum
+     lines_deleted = contributor['weeks'].map{ |x| x['d'] }.sum
+     commits_made = contributor['weeks'].map { |x| x['c'] }.sum
+     repo = Reposit.find_or_create_by(reposit_name: @repo_name)
+     contrib = Contribution.find_or_create_by(user_id: user.id,
+                                              additions: lines_added,
+                                              deletions: lines_deleted,
+                                              changes: commits_made,
+                                              repo_id: repo.id)
   end
-#   a.push(xx[0]["weeks"][0]["a"])
-#   b.push(xx[0]["weeks"][0]["d"])
-# # sort data
-#   def analyze_contributors
-#   end
 
-# run
+
   def run
     response = 0
-    user_pass
+    # user_pass
     show_table
     response = introduction
     if response == 1
@@ -108,16 +112,12 @@ module Commitchamp
       puts "number 2"
       owner_name = name_of_org
       repo_name = name_of_repo
-      pull_contributors(owner_name, repo_name)
+      pull_contributors#(owner_name, repo_name)
     end
     query_table
     show_table
   end
-
-
-
-
-  end
+ end
   binding.pry
 end
 
