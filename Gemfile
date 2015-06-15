@@ -6,6 +6,8 @@ source 'https://rubygems.org'
 gem 'activerecord'
 gem 'sqlite3'
 gem 'httparty'
+gem 'sinatra'
+gem 'etsy'
 
 group :development do
   gem 'pry'

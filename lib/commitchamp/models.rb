@@ -10,7 +10,7 @@ module Commitchamp
   end
 
   class Contribution < ActiveRecord::Base
-    belongs_to :users
-    belongs_to :reposits
+    belongs_to :user
+    belongs_to :reposit
   end
 end
